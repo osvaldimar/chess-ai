@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -15,12 +16,15 @@ import com.chess.core.ResponseChessboard;
 import com.chess.core.client.ChessServiceRemote;
 import com.chess.core.client.ResponseClient;
 import com.chess.core.enums.PositionChessboard;
+import com.chess.core.enums.TypePiece;
 import com.chess.core.enums.TypePlayer;
 import com.chess.core.exception.CheckMoveException;
 import com.chess.core.exception.CheckStateException;
-import com.chess.core.exception.CheckmateException;
 import com.chess.core.helper.PieceHelper;
+import com.chess.core.model.ChessboardModel;
+import com.chess.core.model.Piece;
 import com.chess.core.model.Player;
+import com.chess.core.model.Queen;
 import com.chess.core.model.Square;
 import com.chess.core.service.ChessMultiplayerOnline;
 import com.chess.core.service.ChessServiceImpl;
@@ -47,7 +51,7 @@ public class AIApplication {
 				new Player(chessboard.getPlayer1().getTypePlayer()), 
 				new Player(chessboard.getPlayer2().getTypePlayer())
 		);
-		game.getChessboard().setSquares(ChessboardPieceFactory.buildCloneSquares(chessboard.getSquaresChessboard()));
+		game.getChessboard().setModel(ChessboardPieceFactory.cloneDeepGeneric(chessboard.getModel()));
 		game.setTurnPlayer(playerAI);
 		this.game = game;
 		this.playerAI = playerAI;
@@ -78,12 +82,25 @@ public class AIApplication {
 				this.playerAI.getTypePlayer().toString());
 		this.responseClient = this.service.selectAndMovePiece(bestMovementSimulation.getPositionDestinySimulated().toString(), 
 				this.playerAI.getTypePlayer().toString());
+		//validate promotion pawn
+		if(ResponseChessboard.StatusResponse.PAWN_PROMOTION.toString().equals(this.responseClient.getStatus())){
+			this.service.choosePromotion(TypePiece.QUEEN.toString(), this.playerAI.getTypePlayer().toString());
+		}
 	}
 	
 	public ResponseClient getResponseClient() {
 		return responseClient;
 	}
 
+	public Map<PositionChessboard, List<PositionChessboard>> getMapPiecesAndListMovements(
+			Square[][] squares, TypePlayer type, Set<PositionChessboard> setMovementsAllowedToSimulation) {
+		Map<PositionChessboard, List<PositionChessboard>> mapPiecesAndListMovements = this.getMapPiecesAndListMovements(squares, type);
+		mapPiecesAndListMovements.entrySet().stream().forEach(entry -> {
+			entry.getValue().removeIf(f -> !setMovementsAllowedToSimulation.contains(f));
+		});
+		return mapPiecesAndListMovements;
+	}
+	
 	public Map<PositionChessboard, List<PositionChessboard>> getMapPiecesAndListMovements(
 			Square[][] squares, TypePlayer type) {
 		
@@ -111,21 +128,26 @@ public class AIApplication {
 		//Map<PositionChessboard, Map<PositionChessboard, Double>> mapResultScoreAllPieces = new HashMap<>();	
 		List<PieceResultScoreModel> listPieceResultScoreModel = new ArrayList<>();
 		
+		this.game.getChessboard().setSquares(squares);
+		ChessboardModel modelReal = ChessboardPieceFactory.cloneDeepGeneric(this.game.getChessboard().getModel());
+		
 		//my pieces position origin
 		for(PositionChessboard keyOrigin : mapPiecesAndListMovements.keySet()){
 			Map<PositionChessboard, Double> mapResultScoreMovementsOfPiece = new HashMap<>();
 			mapPiecesAndListMovements.get(keyOrigin).forEach(destiny -> {
-				Square[][] clone = ChessboardPieceFactory.buildCloneSquares(squares);
-				this.game.getChessboard().setSquares(clone);
+				ChessboardModel modelClone = ChessboardPieceFactory.cloneDeepGeneric(modelReal);
+				this.game.getChessboard().setModel(modelClone);
 				try {
-					this.game.getChessboard().movePieceInTheChessboard(keyOrigin, destiny, clone[keyOrigin.getLetter()][keyOrigin.getNumber()].getPiece());
-					Double value = PieceHelper.getTotalScoreChessboardPiecesByPlayer(clone, type);//this.playerAI.getTypePlayer() ? this.getScoreChessboardAI(clone) : this.getScoreChessboardOpponent(clone);
+					this.game.getChessboard().movePieceInTheChessboard(keyOrigin, destiny, this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece());
+					Double value = PieceHelper.getTotalScoreChessboardPiecesByPlayer(modelClone.getSquares(), type);
 					mapResultScoreMovementsOfPiece.put(destiny, value);
 					
 				} catch (CheckMoveException e) {
-					System.out.println("IGNORED keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " + clone[keyOrigin.getLetter()][keyOrigin.getNumber()].getPiece().getTypePiece());
+					System.out.println("IGNORED keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " 
+							+ this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece().getTypePiece());
 				} catch (CheckStateException s){
-					System.out.println("IGNORED: keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " + clone[keyOrigin.getLetter()][keyOrigin.getNumber()].getPiece().getTypePiece());
+					System.out.println("IGNORED: keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " 
+							+ this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece().getTypePiece());
 				}
 			});
 			PieceResultScoreModel pieceResultScoreModel = new PieceResultScoreModel(
@@ -134,7 +156,7 @@ public class AIApplication {
 			listPieceResultScoreModel.add(pieceResultScoreModel);
 		}
 		
-		this.game.getChessboard().setSquares(squares);			
+		this.game.getChessboard().setModel(modelReal);		
 		return listPieceResultScoreModel;
 	}	
 	

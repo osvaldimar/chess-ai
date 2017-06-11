@@ -5,14 +5,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.chess.core.Chessboard;
 import com.chess.core.enums.PositionChessboard;
 import com.chess.core.exception.CheckMoveException;
 import com.chess.core.exception.CheckStateException;
-import com.chess.core.exception.CheckmateException;
-import com.chess.core.model.Square;
+import com.chess.core.model.ChessboardModel;
+import com.chess.core.model.Piece;
+import com.chess.core.model.Queen;
 import com.chess.core.util.ChessboardPieceFactory;
 import com.dim.chess.ai.model.BestMovementSimulation;
 import com.dim.chess.ai.model.BestSimulationTurnAI;
@@ -30,20 +33,21 @@ public class AISimulation {
 		this.listBestSimulationTurnAI = new ArrayList<>();
 	}
 	
+	public <A extends T, T, R> Function<? super A, Integer> pega(Function<? super T, ? extends Integer> f){
+		return (t) -> f.apply(t);
+	}
+	
 	public void calculeSimulationBestTurn(List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI) {
 		
 		listPieceResultScoreMovementsTurnAI.forEach(p -> p.sortedMapResultScoreMovementsOfPiece());
 		System.out.println("\nSorted just map internal result score movements: \n" + listPieceResultScoreMovementsTurnAI);
-		int totalResultScore = listPieceResultScoreMovementsTurnAI.stream().map(m -> m.getTotalResultScoreMovementsOfPiece()).reduce((a, b) -> a+b).orElse(0).intValue();
+		int totalResultScore = listPieceResultScoreMovementsTurnAI.stream().map(t -> this.pega(PieceResultScoreModel::getTotalResultScoreMovementsOfPiece).apply(t)).reduce((a, b) -> a+b).orElse(0).intValue();
 		System.out.println("Total movements of all pieces: " + totalResultScore);
 		
 		while(!listPieceResultScoreMovementsTurnAI.isEmpty() && totalResultScore != 0){
 			BestSimulationTurnAI doBestSimulation = this.doBestSimulationTurnInList(listPieceResultScoreMovementsTurnAI);
 			this.listBestSimulationTurnAI.add(doBestSimulation);
 
-			//validate if player actual does checkmate or draw
-			//TODO MODEL
-			
 			//validate list piece result score has movements yet into map
 			if(listPieceResultScoreMovementsTurnAI.stream().map(m -> m.getTotalResultScoreMovementsOfPiece())
 					.reduce((a, b) -> a+b).orElse(0).intValue() == 0 || this.playerAI.getDifficulty().getLevelAI().getValue() == 1){
@@ -63,29 +67,41 @@ public class AISimulation {
 		PieceResultScoreModel pieceResult = this.findBestPieceResultScoreModel(listPieceResultScoreMovementsTurnAI);
 		Entry<PositionChessboard, Double> entryDestiny = pieceResult.getMapResultScoreMovementsOfPiece().entrySet().stream().findFirst().orElse(null);
 		//delete best position movement of pieceResult requested 
-		listPieceResultScoreMovementsTurnAI.stream().filter(f -> f.getPositionPiece() == pieceResult.getPositionPiece())
+		teste(listPieceResultScoreMovementsTurnAI, pieceResult)
 					.findFirst().orElse(null).getMapResultScoreMovementsOfPiece()
 					.remove(pieceResult.getMapResultScoreMovementsOfPiece().entrySet().stream().findFirst().orElse(null).getKey());
 		System.out.println("Total movements yet available: " + listPieceResultScoreMovementsTurnAI.stream()
 					.map(m -> m.getTotalResultScoreMovementsOfPiece()).reduce((a, b) -> a+b).orElse(0).intValue());
 		
-		Square[][] cloneReal = ChessboardPieceFactory.buildCloneSquares(this.chessboard.getSquaresChessboard());
+		ChessboardModel modelReal = ChessboardPieceFactory.cloneDeepGeneric(this.chessboard.getModel());
+		
 		BestSimulationTurnAI bestSimulation = null;
 		try {
 			this.chessboard.movePieceInTheChessboard(
 					pieceResult.getPositionPiece(), 
 					entryDestiny.getKey(), 
-					cloneReal[pieceResult.getPositionPiece().getLetter()][pieceResult.getPositionPiece().getNumber()].getPiece());
+					this.chessboard.getSquareChessboard(pieceResult.getPositionPiece()).getPiece());
 			
-			bestSimulation = new BestSimulationTurnAI(this.chessboard.getSquaresChessboard(), 
+			//validate promotion pawn
+			if(this.chessboard.getPositionPromotionPawn() != null){
+				Piece pawn = this.chessboard.getSquareChessboard(this.chessboard.getPositionPromotionPawn()).getPiece();
+				this.chessboard.processPromotionOfPawn(this.chessboard.getPositionPromotionPawn(), new Queen(pawn.getColor(), pawn.getPlayer()));
+			}
+			
+			bestSimulation = new BestSimulationTurnAI(playerAI, this.chessboard.getModel(), 
 					pieceResult.getPieceName(), entryDestiny.getValue(), 
 					pieceResult.getPositionPiece(), entryDestiny.getKey());
 					
-			this.chessboard.setSquares(cloneReal);
+			this.chessboard.setModel(modelReal);
 		} catch (CheckMoveException | CheckStateException e) {
 			e.printStackTrace();
 		}		
 		return bestSimulation;
+	}
+
+	private Stream<PieceResultScoreModel> teste(List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI,
+			PieceResultScoreModel pieceResult) {
+		return listPieceResultScoreMovementsTurnAI.stream().filter(f -> f.getPositionPiece() == pieceResult.getPositionPiece());
 	}
 	
 	private PieceResultScoreModel findBestPieceResultScoreModel(List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI) {

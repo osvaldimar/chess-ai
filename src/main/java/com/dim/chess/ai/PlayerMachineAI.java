@@ -3,16 +3,15 @@ package com.dim.chess.ai;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.chess.core.Chessboard;
-import com.chess.core.GameApplication;
 import com.chess.core.client.PlayerMode;
 import com.chess.core.enums.PositionChessboard;
 import com.chess.core.enums.TypePlayer;
 import com.chess.core.model.Difficulty;
-import com.chess.core.model.Player;
-import com.chess.core.service.ChessMultiplayerOnline;
 
 public class PlayerMachineAI extends PlayerMode {
 
+	private static final long serialVersionUID = 6512889892985044671L;
+	
 	private Difficulty difficulty;
 
 	public PlayerMachineAI(TypePlayer typePlayer){
