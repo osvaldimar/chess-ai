@@ -87,7 +87,7 @@ public class BestSimulationTurnAI {
 				if(!isValidateNextTurnCheckmateOrDraw(game.getChessboard().getModel(), typeTurnCurrent)) return;
 				typeTurnCurrent = PieceHelper.negateTypePlayer(typeTurnCurrent);
 				
-				System.out.println("\n***Method calculeNextBestMovementsOpponent() INIT level: " + cont + " - TOTAL LEVELS: " +difficulty.getLevelAI().getValue()+ "***\n");
+				//System.out.println("\n***Method calculeNextBestMovementsOpponent() INIT level: " + cont + " - TOTAL LEVELS: " +difficulty.getLevelAI().getValue()+ "***\n");
 				
 				PlayerMachineAI buildPlayer = buildPlayerAISimulation(difficulty, typePlayerAI, typeTurnCurrent);
 				AIApplication AIApp = new AIApplication(game, buildPlayer);
@@ -97,7 +97,7 @@ public class BestSimulationTurnAI {
 				List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI = AIApp.getListPieceResultScoreMovementsTurnAI(
 						game.getChessboard().getSquaresChessboard(), mapPiecesAndListMovements, typeTurnCurrent);
 				
-				Chessboard.printCloneDebugChessboard(game.getChessboard().getSquaresChessboard(), "BEFORE TO MOVE");
+//				Chessboard.printCloneDebugChessboard(game.getChessboard().getSquaresChessboard(), "BEFORE TO MOVE");
 				AISimulation aiSimulation = new AISimulation(buildPlayer, game.getChessboard());
 				aiSimulation.calculeSimulationBestTurn(listPieceResultScoreMovementsTurnAI);
 				
@@ -105,22 +105,22 @@ public class BestSimulationTurnAI {
 				AIApp.executeBestMovementCalculated(bestMovementSimulation);
 				
 				
-				System.out.println("RESPONSE CLIENT TURN CURRENT: " + typeTurnCurrent + " \t\t STATUS: " + AIApp.getResponseClient().getStatus() );
-				Chessboard.printCloneDebugChessboard(game.getChessboard().getSquaresChessboard(), "AFTER TO MOVE");
+//				System.out.println("RESPONSE CLIENT TURN CURRENT: " + typeTurnCurrent + " \t\t STATUS: " + AIApp.getResponseClient().getStatus() );
+//				Chessboard.printCloneDebugChessboard(game.getChessboard().getSquaresChessboard(), "AFTER TO MOVE");
 				
 				double score = PieceHelper.getTotalScoreChessboardPiecesByPlayer(game.getChessboard().getSquaresChessboard(), typePlayerAI);
 				this.listScoreLevelsCalculated.add(new TrackMovement(score, bestMovementSimulation.getPositionOriginSimulated(), 
 						bestMovementSimulation.getPositionDestinySimulated(), 
 						bestMovementSimulation.getPieceName(), typeTurnCurrent.toString()));
 				
-				System.out.println("\n*** NEXT SCORE AI: " +score+ " - MOVEMENT EXECUTED: " +bestMovementSimulation
-							+ "\t\t\n - TURN: " +typeTurnCurrent+ " ... level: " + cont + " - TOTAL LEVELS: " +difficulty.getLevelAI().getValue()+ "***\n");
+//				System.out.println("\n*** NEXT SCORE AI: " +score+ " - MOVEMENT EXECUTED: " +bestMovementSimulation
+//							+ "\t\t\n - TURN: " +typeTurnCurrent+ " ... level: " + cont + " - TOTAL LEVELS: " +difficulty.getLevelAI().getValue()+ "***\n");
 				
-				if(buildPlayer.getDifficulty().isDeductionLoop()){
-					System.out.println("\nDeduction loop List final of BestSimulationTurnAI: " + aiSimulation.getListBestSimulationTurnAI());
-				}
+//				if(buildPlayer.getDifficulty().isDeductionLoop()){
+//					System.out.println("\nDeduction loop List final of BestSimulationTurnAI: " + aiSimulation.getListBestSimulationTurnAI());
+//				}
 				
-				System.out.println("\n***Method calculeNextBestMovementsOpponent() END level: " + cont + " - TOTAL LEVELS: " +difficulty.getLevelAI().getValue()+ "***\n");
+//				System.out.println("\n***Method calculeNextBestMovementsOpponent() END level: " + cont + " - TOTAL LEVELS: " +difficulty.getLevelAI().getValue()+ "***\n");
 				cont++;
 			}
 		}else{

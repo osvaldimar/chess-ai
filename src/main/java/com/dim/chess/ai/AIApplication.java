@@ -1,5 +1,8 @@
 package com.dim.chess.ai;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,9 +25,7 @@ import com.chess.core.exception.CheckMoveException;
 import com.chess.core.exception.CheckStateException;
 import com.chess.core.helper.PieceHelper;
 import com.chess.core.model.ChessboardModel;
-import com.chess.core.model.Piece;
 import com.chess.core.model.Player;
-import com.chess.core.model.Queen;
 import com.chess.core.model.Square;
 import com.chess.core.service.ChessMultiplayerOnline;
 import com.chess.core.service.ChessServiceImpl;
@@ -59,8 +60,10 @@ public class AIApplication {
 	}
 
 	public ImmutablePair<PositionChessboard, PositionChessboard> playAI(){
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
+		LocalDateTime localDate1 = LocalDateTime.now();
+		System.out.println("Start AIApplication - playAI() ... " + localDate1.format(formatter));
 		
-		System.out.println("playAI ...");
 		Map<PositionChessboard, List<PositionChessboard>> mapPiecesAndListMovements = 
 				getMapPiecesAndListMovements(game.getChessboard().getSquaresChessboard(), playerAI.getTypePlayer());
 		
@@ -73,11 +76,14 @@ public class AIApplication {
 		BestMovementSimulation bestMovementSimulation = aiSimulation.getBestMovementSimulation();
 		//executeBestMovementCalculated(bestMovementSimulation);
 		
+		LocalDateTime localDate2 = LocalDateTime.now();
+		System.out.println("End AIApplication - playAI() ... " + localDate2.format(formatter) + " - diff in seconds: " + localDate1.until(localDate2, ChronoUnit.SECONDS));
+		
 		return ImmutablePair.of(bestMovementSimulation.getPositionOriginSimulated(), bestMovementSimulation.getPositionDestinySimulated());
 	}
 	
 	public void executeBestMovementCalculated(BestMovementSimulation bestMovementSimulation) {
-		System.out.println("\nMethod executeBestMovementCalculated(): " + bestMovementSimulation);
+//		System.out.println("\nMethod executeBestMovementCalculated(): " + bestMovementSimulation);
 		this.service.selectAndMovePiece(bestMovementSimulation.getPositionOriginSimulated().toString(), 
 				this.playerAI.getTypePlayer().toString());
 		this.responseClient = this.service.selectAndMovePiece(bestMovementSimulation.getPositionDestinySimulated().toString(), 
@@ -143,11 +149,11 @@ public class AIApplication {
 					mapResultScoreMovementsOfPiece.put(destiny, value);
 					
 				} catch (CheckMoveException e) {
-					System.out.println("IGNORED keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " 
-							+ this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece().getTypePiece());
+//					System.out.println("IGNORED keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " 
+//							+ this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece().getTypePiece());
 				} catch (CheckStateException s){
-					System.out.println("IGNORED: keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " 
-							+ this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece().getTypePiece());
+//					System.out.println("IGNORED: keyOrigin: " + keyOrigin + " - destiny: " + destiny + " - piece: " 
+//							+ this.game.getChessboard().getSquareChessboard(keyOrigin).getPiece().getTypePiece());
 				}
 			});
 			PieceResultScoreModel pieceResultScoreModel = new PieceResultScoreModel(

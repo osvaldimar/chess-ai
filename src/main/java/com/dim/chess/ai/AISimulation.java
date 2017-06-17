@@ -5,6 +5,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,9 +44,9 @@ public class AISimulation {
 	public void calculeSimulationBestTurn(List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI) {
 		
 		listPieceResultScoreMovementsTurnAI.forEach(p -> p.sortedMapResultScoreMovementsOfPiece());
-		System.out.println("\nSorted just map internal result score movements: \n" + listPieceResultScoreMovementsTurnAI);
+		//System.out.println("\nSorted just map internal result score movements: \n" + listPieceResultScoreMovementsTurnAI);
 		int totalResultScore = listPieceResultScoreMovementsTurnAI.stream().map(t -> this.pega(PieceResultScoreModel::getTotalResultScoreMovementsOfPiece).apply(t)).reduce((a, b) -> a+b).orElse(0).intValue();
-		System.out.println("Total movements of all pieces: " + totalResultScore);
+		//System.out.println("Total movements of all pieces: " + totalResultScore);
 		
 		while(!listPieceResultScoreMovementsTurnAI.isEmpty() && totalResultScore != 0){
 			BestSimulationTurnAI doBestSimulation = this.doBestSimulationTurnInList(listPieceResultScoreMovementsTurnAI);
@@ -54,24 +58,23 @@ public class AISimulation {
 				break;
 			}
 		}
-		//TODO transaction thread exception here
-		this.listBestSimulationTurnAI.stream().forEach(f ->  
-				f.calculeNextBestMovementsOpponent(this.playerAI.getDifficulty(), this.playerAI.getTypePlayer()));
+		
+		AIPoolThreadExecutorService threadService = new AIPoolThreadExecutorService();
+		threadService.calculeList(this.listBestSimulationTurnAI, this.playerAI.getDifficulty(), this.playerAI.getTypePlayer());
 		
 	}
 	
 	private BestSimulationTurnAI doBestSimulationTurnInList(List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI) {
 		
-		//valida list empty and map empty of list piece result score movements available
-		
-		PieceResultScoreModel pieceResult = this.findBestPieceResultScoreModel(listPieceResultScoreMovementsTurnAI);
-		Entry<PositionChessboard, Double> entryDestiny = pieceResult.getMapResultScoreMovementsOfPiece().entrySet().stream().findFirst().orElse(null);
+		PieceResultScoreModel pieceResult;
+		Entry<PositionChessboard, Double> entryDestiny;
+		//valida list empty and map empty of list piece result score movements available		
+		pieceResult = this.findBestPieceResultScoreModel(listPieceResultScoreMovementsTurnAI);
+		entryDestiny = pieceResult.getMapResultScoreMovementsOfPiece().entrySet().stream().findFirst().orElse(null);
 		//delete best position movement of pieceResult requested 
 		teste(listPieceResultScoreMovementsTurnAI, pieceResult)
 					.findFirst().orElse(null).getMapResultScoreMovementsOfPiece()
 					.remove(pieceResult.getMapResultScoreMovementsOfPiece().entrySet().stream().findFirst().orElse(null).getKey());
-		System.out.println("Total movements yet available: " + listPieceResultScoreMovementsTurnAI.stream()
-					.map(m -> m.getTotalResultScoreMovementsOfPiece()).reduce((a, b) -> a+b).orElse(0).intValue());
 		
 		ChessboardModel modelReal = ChessboardPieceFactory.cloneDeepGeneric(this.chessboard.getModel());
 		
@@ -107,7 +110,6 @@ public class AISimulation {
 	private PieceResultScoreModel findBestPieceResultScoreModel(List<PieceResultScoreModel> listPieceResultScoreMovementsTurnAI) {
 		
 		//intelligence to find value score higher
-		//List<PieceResultScoreModel> collectOrdered 
 		listPieceResultScoreMovementsTurnAI = listPieceResultScoreMovementsTurnAI.stream().sorted(new Comparator<PieceResultScoreModel>() {
 			public int compare(PieceResultScoreModel o1, PieceResultScoreModel o2) {
 				Entry<PositionChessboard, Double> entry1 = o1.getMapResultScoreMovementsOfPiece().entrySet().stream().findFirst().orElse(null);
@@ -118,7 +120,7 @@ public class AISimulation {
 			}
 		}).collect(Collectors.toList());
 		
-		System.out.println("\nSorted list all pieces and result score movements: \n" + listPieceResultScoreMovementsTurnAI);
+		//System.out.println("\nSorted list all pieces and result score movements: \n" + listPieceResultScoreMovementsTurnAI);
 		
 		//first double value score
 		Entry<PositionChessboard, Double> entryFirst = listPieceResultScoreMovementsTurnAI.get(0).getMapResultScoreMovementsOfPiece()
@@ -135,7 +137,7 @@ public class AISimulation {
 		
 		//random list
 		PieceResultScoreModel pieceBestMovement = collectListValuesEquals.get(new Random().nextInt(collectListValuesEquals.size()));		
-		System.out.println("\nMethod findBestPieceResultScoreModel() piece choosed : " + pieceBestMovement);
+		//System.out.println("\nMethod findBestPieceResultScoreModel() piece choosed : " + pieceBestMovement);
 		
 		return pieceBestMovement;
 	}
@@ -144,7 +146,7 @@ public class AISimulation {
 		this.listBestSimulationTurnAI = this.listBestSimulationTurnAI.stream().sorted(new Comparator<BestSimulationTurnAI>() {
 			@Override
 			public int compare(BestSimulationTurnAI o1, BestSimulationTurnAI o2) {
-				//TODO pegar best score simulation opponent levels
+				//pegar best score simulation opponent levels
 				return Double.compare(o1.getLastScoreLevelsCalculated(), o2.getLastScoreLevelsCalculated()) * -1;
 			}
 		}).collect(Collectors.toList());
