@@ -12,6 +12,12 @@
   </properties>
   
   <dependencies>
+  	<!-- use rest template Spring -->
+  	<dependency>
+  		<groupId>org.springframework</groupId>
+  		<artifactId>spring-web</artifactId>
+  		<version>4.3.3.RELEASE</version>
+  	</dependency>
   	<dependency>
   		<groupId>com.dim.chess.core</groupId>
   		<artifactId>chess-core</artifactId>

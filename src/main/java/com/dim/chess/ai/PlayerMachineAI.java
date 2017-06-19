@@ -11,15 +11,18 @@ import com.chess.core.model.Difficulty;
 public class PlayerMachineAI extends PlayerMode {
 
 	private static final long serialVersionUID = 6512889892985044671L;
-	
+
 	private Difficulty difficulty;
 
-	public PlayerMachineAI(TypePlayer typePlayer){
+	public PlayerMachineAI() {
+	}
+
+	public PlayerMachineAI(final TypePlayer typePlayer) {
 		super(typePlayer);
 		this.difficulty = new Difficulty(Difficulty.Level.LEVEL_AI_1, Difficulty.Deduction.LEVEL_DEDUCTION_1);
 	}
-	
-	public PlayerMachineAI(TypePlayer typePlayer, Difficulty difficulty){
+
+	public PlayerMachineAI(final TypePlayer typePlayer, final Difficulty difficulty) {
 		super(typePlayer);
 		this.difficulty = difficulty;
 	}
@@ -30,13 +33,14 @@ public class PlayerMachineAI extends PlayerMode {
 	}
 
 	@Override
-	public ImmutablePair<PositionChessboard, PositionChessboard> play(Chessboard chessboard) {
+	public ImmutablePair<PositionChessboard, PositionChessboard> play(final Chessboard chessboard) {
 		System.out.println("Method play() of PlayerMachineAI.java - chessboard");
-		ImmutablePair<PositionChessboard, PositionChessboard> pairPositions = new AIApplication(chessboard, this).playAI();
+		final ImmutablePair<PositionChessboard, PositionChessboard> pairPositions = new AIApplication(chessboard, this)
+				.playAI();
 		return pairPositions;
-	}	
-	
+	}
+
 	public Difficulty getDifficulty() {
-		return difficulty;
+		return this.difficulty;
 	}
 }
