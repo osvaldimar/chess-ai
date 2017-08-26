@@ -15,8 +15,8 @@ public class PlayerConnectAI extends PlayerMachineAI {
 
 	private static final long serialVersionUID = -4785649513452767268L;
 
-	private static final String URL_ISLIVE = "http://localhost:8081/app-chess-ai/isLiveChessAI";
-	private static final String URL_TURNAI = "http://localhost:8081/app-chess-ai/chessboard/turnAI";
+	private static final String URL_ISLIVE = "https://chessboot.herokuapp.com/chess-service/isLiveChessAI";
+	private static final String URL_TURNAI = "https://chessboot.herokuapp.com/chess-service/chessboard/turnAI";
 
 	public PlayerConnectAI() {
 	}
